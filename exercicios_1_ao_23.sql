@@ -6,7 +6,7 @@ ORDER BY matricula;
 -- 2. o nome, a matrícula , o cpf dos funcionários admitidos depois de 01/01/2000.
 SELECT nome, matricula, cpf
 FROM funcionarios
-WHERE admissao &gt; &#39;01/01/2000&#39;
+WHERE admissao > '01/01/2000'
 ORDER BY matricula;
 
 -- 3. Matrícula, nome, código da situação e descrição da situação dos funcionários (tabelas
@@ -23,7 +23,7 @@ ORDER BY funcionarios.matricula;
 SELECT nome, matricula, cpf
 FROM funcionarios
 WHERE vinculo NOT IN (13, 11)
-AND sexo = &#39;F&#39;
+AND sexo = 'F';
 ORDER BY matricula;
 
 -- 5. o nome e a matrícula dos funcionários bem como o nome do cargo e o nome da função
@@ -51,7 +51,7 @@ ORDER BY funcionarios.matricula;
 -- 7. Nome e a matrícula do funcionário e o nome e o período de todas as empresas pelas
 --quais ele já trabalhou (aba de averbações. Tabela: empregos)
 SELECT funcionarios.nome, funcionarios.matricula, empregos.nomeempresa,
-to_char(dtadm, &#39;dd/mm/yyyy&#39;) || &#39; - &#39; || to_char(dtdem, &#39;dd/mm/yyyy&#39;)as periodo
+to_char(dtadm, 'dd/mm/yyyy') || ' - ' || to_char(dtdem, 'dd/mm/yyyy') as periodo
 FROM funcionarios
 JOIN empregos
 ON empregos.codigo = funcionarios.matricula
