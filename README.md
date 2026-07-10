@@ -1,1 +1,1 @@
-# exerc-cios_sql
+# exercicios_sql
