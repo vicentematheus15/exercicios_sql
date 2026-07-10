@@ -1,18 +1,18 @@
 -- 1. o nome, a matrícula , o cpf e a data de nascimento dos funcionários
-SELECT nome, 
-    matricula, 
-    cpf, 
-    dtnascimento 
+SELECT funcionarios.nome, 
+    funcionarios.matricula, 
+    funcionarios.cpf, 
+    funcionarios.dtnascimento 
 FROM funcionarios
-ORDER BY matricula;
+ORDER BY funcionarios.matricula;
 
 -- 2. o nome, a matrícula, o cpf dos funcionários admitidos depois de 01/01/2000    
-SELECT nome, 
-    matricula, 
-    cpf
+SELECT funcionarios.nome, 
+    funcionarios.matricula, 
+    funcionarios.cpf
 FROM funcionarios
-WHERE admissao > '01/01/2000'
-ORDER BY matricula;
+WHERE funcionarios.admissao > '01/01/2000'
+ORDER BY funcionarios.matricula;
 
 -- 3. Matrícula, nome, código da situação e descrição da situação dos 
 -- funcionários (tabelas envolvidas: funcionarios, tipomovtos)
