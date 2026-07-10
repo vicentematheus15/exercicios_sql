@@ -33,9 +33,9 @@ SELECT funcionarios.nome,
 FROM funcionarios
 JOIN tipomovtos 
     ON tipomovtos.tipmov = funcionarios.tipmov
-WHERE tipomovtos.classificacao NOT IN (1, 5, 11, 12)
+WHERE tipomovtos.classificacao NOT IN (1, 5, 12)
     AND funcionarios.sexo = 'F'
-ORDER BY matricula;
+ORDER BY funcionarios.matricula;
     
 -- 5. o nome e a matrícula dos funcionários bem como o nome do cargo e o nome 
 -- da função a qual os funcionários pertencem(tabelas envolvidas: 
@@ -216,8 +216,9 @@ WHERE tipomovtos.tipmov = 30
 AND funcionarios.matricula = 1
 ORDER BY movimentacoes.dtinicio DESC;
 
--- 17. Listar a matrícula e o histórico de troca de nome daquela pessoa (data inicio, data fim e
---o nome da época). Tabelas envolvidas: funcionários e movimentacoes
+-- 17. Listar a matrícula e o histórico de troca de nome daquela pessoa 
+--(data inicio, data fim e o nome da época). Tabelas envolvidas: 
+-- funcionários e movimentacoes
 SELECT funcionarios. matricula,
     movimentacoes.obs2 as nome_anterior,
     to_char(dtinicio, 'dd/mm/yyyy') || ' - ' || to_char(dttermino, 'dd/mm/yyyy') as periodo
@@ -231,6 +232,5 @@ WHERE tipomovtos.tipmov = 37
 AND funcionarios.matricula = 1
 ORDER BY movimentacoes.dtinicio DESC;
 
-    
-
-
+-- 18. Listar a matricula e o nome dos funcionários, bem como a data de inicio das férias e a
+-- quantidade de dias, de todos os registros de férias gozadas em 2018
