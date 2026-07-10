@@ -1,9 +1,3 @@
-SELECT * FROM Funcionarios
-where matricula = 11111;
-SELECT * FROM contas;
-
-
-
 -- 1. o nome, a matrícula , o cpf e a data de nascimento dos funcionários
 SELECT nome, 
     matricula, 
