@@ -46,33 +46,38 @@ SELECT funcionarios.nome,
     funcoes.descricao as descricao_funcao
 FROM funcionarios
 JOIN cargos
-    ON cargos.cargo = funcionarios.cargo 
+    ON cargos.empresa = funcionarios.empresa
+    AND cargos.cargo = funcionarios.cargo 
 JOIN funcoes
-    ON funcoes.funcao = funcionarios.funcao
+    ON funcoes.empresa = funcionarios.empresa
+    AND funcoes.funcao = funcionarios.funcao
 ORDER BY funcionarios.matricula;
 
 -- 6. o nome e a matrícula bem como o nome do cargo e o nome do setor ao qual 
--- osfuncionários pertencem (tabelas envolvidas: funcionários, cargos, setor).
+-- os funcionários pertencem (tabelas envolvidas: funcionários, cargos, setor).
 SELECT funcionarios.nome, 
     funcionarios.matricula, 
     cargos.descricao as descricao_cargo, 
     setores.descricao as descricao_setor
 FROM funcionarios
 JOIN cargos 
-    ON cargos.cargo = funcionarios.cargo
+    ON cargos.empresa = funcionarios.empresa    
+    AND cargos.cargo = funcionarios.cargo
 JOIN setores
-    ON setores.setor = funcionarios.setor
+    ON setores.empresa = funcionarios.empresa
+    AND setores.setor = funcionarios.setor
 ORDER BY funcionarios.matricula;
 
 -- 7. Nome e a matrícula do funcionário e o nome e o período de todas as 
 -- empresas pelas quais ele já trabalhou (aba de averbações. Tabela: empregos)
 SELECT funcionarios.nome, 
     funcionarios.matricula, 
-    empregos.nomeempresa,
-to_char(dtadm, 'dd/mm/yyyy') || ' - ' || to_char(dtdem, 'dd/mm/yyyy')as periodo
+    empregos.nomeempresa as empresa,
+to_char(empregos.dtadm, 'dd/mm/yyyy') || ' - ' || to_char(empregos.dtdem, 'dd/mm/yyyy')as periodo
 FROM funcionarios
 JOIN empregos
-    ON empregos.codigo = funcionarios.matricula
+    ON empregos.empresa = funcionarios.empresa 
+    AND empregos.codigo = funcionarios.matricula
 ORDER BY funcionarios.matricula;
 
 -- 8. Matrícula, nome, o tipo da formação (Se é graduação, pós graduação, 
@@ -100,13 +105,14 @@ SELECT funcionarios.nome,
     funcionarios.matricula, 
     cargos.descricao as cargo, 
     setores.descricao as setor, 
-    setores_responsaveis. matricula,
-    responsaveis.nome as responsaveis_setor
+    responsaveis.nome as responsavel_setor
 FROM funcionarios
 JOIN cargos 
-    ON cargos.cargo = funcionarios.cargo
+    ON cargos.empresa = funcionarios.empresa
+    AND cargos.cargo = funcionarios.cargo
 JOIN setores
-    ON setores.setor = funcionarios.setor
+    ON setores.empresa = funcionarios.empresa
+    AND setores.setor = funcionarios.setor
 JOIN setores_responsaveis
      ON setores_responsaveis.empresa = setores.empresa
      AND setores_responsaveis. setor = setores.setor
@@ -127,7 +133,8 @@ SELECT funcionarios.nome,
     calculos.valor
 FROM funcionarios
 JOIN calculos
-    ON funcionarios.matricula = calculos.matricula
+    ON calculos.empresa = funcionarios.empresa
+    AND calculos.matricula = funcionarios.matricula
 JOIN contas
     ON contas.conta = calculos.conta
 WHERE funcionarios.matricula = 1
@@ -135,7 +142,7 @@ AND calculos.conta = 9002
 ORDER BY calculos.referencia;
 
 -- 11. O nome, a matrícula, o nome da conta e o valores recebidos por um 
---funcionário na folha mensal de referência 01/06/2017 (tabelas envolvidas: 
+-- funcionário na folha mensal de referência 01/06/2017 (tabelas envolvidas: 
 -- funcionários, cálculos, contas e tipofolha)
 SELECT funcionarios.nome, 
     funcionarios.matricula, 
@@ -144,7 +151,8 @@ SELECT funcionarios.nome,
     calculos.valor
 FROM funcionarios
 JOIN calculos
-    ON funcionarios.matricula = calculos.matricula
+    ON calculos.empresa = funcionarios.empresa
+    AND calculos.matricula = funcionarios.matricula
 JOIN contas
     ON contas.conta = calculos.conta
 WHERE referencia BETWEEN '01/06/2017' AND '30/06/2017'
@@ -152,7 +160,7 @@ AND funcionarios.matricula = 1
 AND calculos.tipofolha = 1;
 
 -- 12. SQL que retorna quantidade de servidores (funcionários) ;
-SELECT COUNT(funcionarios.matricula) as qtd_servidores
+SELECT COUNT(DISTINCT funcionarios.cpf) as qtd_servidores
 FROM funcionarios;
 
 -- 13. SQL que retorne a quantidade de servidores por vínculo empregatício 
@@ -175,12 +183,12 @@ SELECT funcionarios.matricula,
     SUM( calculos.valor ) as total
 FROM funcionarios
 JOIN calculos
-    ON calculos.matricula = funcionarios.matricula
+    ON calculos.empresa = funcionarios.empresa
+    AND calculos.matricula = funcionarios.matricula
 WHERE funcionarios.matricula = 1
 and  calculos.conta = 9002
 GROUP BY funcionarios.matricula, 
     funcionarios.nome;
--- como somar somente o valor líquido? no caso sao os que tem calculo.conta = 9002
 
 -- 15. A matrícula, o nome do funcionário e o máximo valor líquido recebido 
 -- por aquele funcionário
@@ -189,7 +197,8 @@ SELECT funcionarios.matricula,
     MAX(calculos.valor) as valor_maximo
 FROM funcionarios
 JOIN calculos
-    ON calculos.matricula = funcionarios.matricula
+    ON calculos.empresa = funcionarios.empresa
+    AND calculos.matricula = funcionarios.matricula
 WHERE funcionarios.matricula = 1
 GROUP BY funcionarios.matricula,
     funcionarios.nome;
@@ -234,3 +243,102 @@ ORDER BY movimentacoes.dtinicio DESC;
 
 -- 18. Listar a matricula e o nome dos funcionários, bem como a data de inicio das férias e a
 -- quantidade de dias, de todos os registros de férias gozadas em 2018
+SELECT funcionarios.matricula,
+    funcionarios.nome,
+    ferias.dtgozo as dt_inicio,
+    ferias.diasferias
+FROM funcionarios
+JOIN ferias
+    ON ferias.empresa = funcionarios.empresa
+    AND ferias.matricula = funcionarios.matricula
+WHERE ferias.dtgozo > '01/01/2018'
+AND ferias.dtret < '01/01/2019'
+ORDER BY funcionarios.matricula;
+
+-- 19. A matricula, o nome, a data de vencimento das férias e a quantidade de 
+-- dias gozados naquele aquisitivo
+SELECT funcionarios.matricula,
+    funcionarios.nome,
+    to_char(ferias.dtvcto_ini, 'dd/mm/yyyy') || ' - ' || to_char(ferias.dtvcto, 'dd/mm/yyyy') as periodo_aquisitivo,
+    ferias.diasferias
+FROM funcionarios
+JOIN ferias
+    ON ferias.empresa = funcionarios.empresa
+    AND ferias.matricula = funcionarios.matricula
+ORDER BY funcionarios.matricula;
+
+-- 20. A matricula, o nome, o ano de vencimento das férias e a quantidade de 
+-- dias de saldo remanescente das férias daquele aquisitivo.
+SELECT funcionarios.matricula,
+    funcionarios.nome,
+    to_char(ferias.dtvcto, 'yyyy')as ano_vencimento,
+    to_char(ferias.dtvcto_ini, 'dd/mm/yyyy') || ' - ' || to_char(ferias.dtvcto, 'dd/mm/yyyy') as periodo_aquisitivo,
+    to_number(30 - ferias.diasferias) as qtd_dias_restantes
+FROM funcionarios
+JOIN ferias
+    ON ferias.empresa = funcionarios.empresa
+    AND ferias.matricula = funcionarios.matricula
+WHERE funcionarios.matricula = 1
+AND ferias.diasferias = 23
+;
+
+-- 21. Listar todas as contas, código e descrição, bem como uma flag para dizer se incide ou
+-- não para imposto de renda. (tabelas envolvidas: contas, incidencia e containcid)
+SELECT contas.conta,
+    contas.descricao,
+    to_char(CASE WHEN incidencia.tipoincidencia = 78 THEN 'Sim' ELSE 'Não' END) as incide_para_IR
+FROM contas
+JOIN incidencia
+    ON incidencia.conta = contas.conta
+JOIN containcid
+    ON containcid.tipoincidencia = incidencia.tipoincidencia
+;
+
+-- 22. Listar o código e o nome de todos operadores que possuem a permissão 
+-- (perfil) Folha de Pagamento.
+
+--23. Criar um sql com 7 colunas: Matricula, Nome, Tipo de folha, Referência da 
+-- folha, valor bruto recebido, total de descontos e total líquido, de valores de folha
+SELECT funcionarios.matricula,
+    funcionarios.nome,
+    tipofolha.descricao as tipo_de_folha,
+    calculos.referencia,
+    calculos.valor as valor_bruto,
+    calculos_desconto.valor as total_desconto,
+    calculos_total_liquido.valor as total_liquido
+FROM funcionarios
+JOIN calculos
+    ON calculos.empresa = funcionarios.empresa
+    AND calculos.matricula = funcionarios.matricula
+JOIN calculos calculos_desconto
+    ON calculos_desconto.empresa = calculos.empresa
+    AND calculos_desconto.matricula = calculos.matricula
+JOIN calculos calculos_total_liquido
+    ON calculos_total_liquido.empresa = calculos_desconto.empresa
+    AND calculos_total_liquido.matricula = calculos_desconto.matricula
+JOIN tipofolha
+    ON tipofolha.tipofolha = calculos.tipofolha
+WHERE funcionarios.matricula = 1
+AND calculos.referencia = '01/05/2026'
+AND calculos.conta = 9000
+AND calculos_desconto.conta = 9001
+AND calculos_total_liquido.conta = 9002
+GROUP BY tipofolha.descricao, calculos.referencia, funcionarios.matricula, funcionarios.nome, calculos.valor, 
+calculos_desconto.valor, calculos_total_liquido.valor
+
+;
+
+
+select * from referencia;
+select * from periodos;
+select * from tipofolha;
+select * from calculos;
+select * from perfis;
+select * from rotinas;
+
+
+
+
+
+
+
