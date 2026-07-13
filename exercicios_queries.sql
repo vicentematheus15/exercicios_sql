@@ -325,11 +325,9 @@ AND calculos_desconto.conta = 9001
 AND calculos_total_liquido.conta = 9002
 GROUP BY tipofolha.descricao, calculos.referencia, funcionarios.matricula, funcionarios.nome, calculos.valor, 
 calculos_desconto.valor, calculos_total_liquido.valor
-
 ;
 
 
-select * from referencia;
 select * from periodos;
 select * from tipofolha;
 select * from calculos;
