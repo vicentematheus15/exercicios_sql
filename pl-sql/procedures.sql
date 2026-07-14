@@ -128,6 +128,35 @@ de funcionários que existem na folha mensal de julho/2019 utilizando 'select in
 inserir uma linha na tabela xcp_debug com o valor da variável; (é só fazer a chamada
 prc_xcp_debug (1,4,w_auxiliar);*/
 
+create or replace procedure pcr_exercicios_vicente is
+     aux_auxiliar number; 
+
+/*sempre que fizer um select into,  preciso cuidar para padronizar possível erros (null por exemplo, padronizando para 0) é preciso envolver a procedure dentro de outro begin/end e passar 
+    "exception when no_data_found then
+            aux_auxiliar := 0;"                                                                 */
+        
+begin
+    begin
+        select count(*)
+        into aux_auxiliar
+        from funcionarios
+        join calculos
+            on calculos.empresa = funcionarios.empresa
+            and calculos.matricula = funcionarios.matricula
+        where 0 = 0
+        and calculos.tipofolha = 1
+        and calculos.referencia between '01/07/2019' and '31/07/2019';
+    exception when no_data_found then
+        aux_auxiliar := 0; 
+    end;
+end;
+
+call pcr_exercicios_vicente();
+
+select *
+from xcp_debug
+where 0 = 0
+and des_usuario = 'teste_vicente_into';
 
 
 /*5 (UTILIZANDO 'CURSOR' )
