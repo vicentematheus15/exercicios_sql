@@ -251,21 +251,24 @@ FROM funcionarios
 JOIN ferias
     ON ferias.empresa = funcionarios.empresa
     AND ferias.matricula = funcionarios.matricula
-WHERE ferias.dtgozo > '01/01/2018'
-AND ferias.dtret < '01/01/2019'
+WHERE extract(year from ferias.dtgozo) = 2018
 ORDER BY funcionarios.matricula;
 
 -- 19. A matricula, o nome, a data de vencimento das férias e a quantidade de 
 -- dias gozados naquele aquisitivo
 SELECT funcionarios.matricula,
     funcionarios.nome,
-    to_char(ferias.dtvcto_ini, 'dd/mm/yyyy') || ' - ' || to_char(ferias.dtvcto, 'dd/mm/yyyy') as periodo_aquisitivo,
-    ferias.diasferias
+    ferias.dtvcto,
+    SUM(nvl(ferias.diasferias, 0))as dias_gozados
 FROM funcionarios
 JOIN ferias
     ON ferias.empresa = funcionarios.empresa
     AND ferias.matricula = funcionarios.matricula
-ORDER BY funcionarios.matricula;
+GROUP BY funcionarios.matricula,
+    funcionarios.nome,
+    ferias.dtvcto
+ORDER BY funcionarios.matricula,
+    ferias.dtvcto;
 
 -- 20. A matricula, o nome, o ano de vencimento das férias e a quantidade de 
 -- dias de saldo remanescente das férias daquele aquisitivo.
@@ -273,66 +276,102 @@ SELECT funcionarios.matricula,
     funcionarios.nome,
     to_char(ferias.dtvcto, 'yyyy')as ano_vencimento,
     to_char(ferias.dtvcto_ini, 'dd/mm/yyyy') || ' - ' || to_char(ferias.dtvcto, 'dd/mm/yyyy') as periodo_aquisitivo,
-    to_number(30 - ferias.diasferias) as qtd_dias_restantes
+    to_number(30 - (nvl(ferias.diasferias, 0) + nvl(ferias.diasperdidos, 0) + nvl(ferias.diasabono, 0))) as qtd_dias_restantes
 FROM funcionarios
 JOIN ferias
     ON ferias.empresa = funcionarios.empresa
     AND ferias.matricula = funcionarios.matricula
-WHERE funcionarios.matricula = 1
-AND ferias.diasferias = 23
+ORDER BY funcionarios.matricula,
+    periodo_aquisitivo
 ;
+
+SELECT funcionarios.matricula,
+    funcionarios.nome,
+    ferias.dtvcto_ini,
+    ferias.dtvcto,
+    concessoes.dias as dias_direito,
+    concessoes.dias - SUM((nvl(ferias.diasferias, 0) + nvl(ferias.diasperdidos, 0) + nvl(ferias.diasabono, 0))) as dias_restantes
+FROM funcionarios
+JOIN ferias
+    ON ferias.empresa = funcionarios.empresa
+    AND ferias.matricula = funcionarios.matricula
+JOIN cargos
+    ON cargos.empresa = funcionarios.empresa
+    AND cargos.cargo = funcionarios.cargo
+JOIN grupofunc
+    ON grupofunc.grupo = cargos.grupo
+JOIN concessoes
+    ON concessoes.concessao = grupofunc.concessao_ferias
+GROUP BY funcionarios.matricula,
+    funcionarios.nome,
+    ferias.dtvcto_ini,
+    ferias.dtvcto,
+    concessoes.dias
+ORDER BY funcionarios.matricula;
+
+    
 
 -- 21. Listar todas as contas, código e descrição, bem como uma flag para dizer se incide ou
 -- não para imposto de renda. (tabelas envolvidas: contas, incidencia e containcid)
 SELECT contas.conta,
     contas.descricao,
-    to_char(CASE WHEN incidencia.tipoincidencia = 78 THEN 'Sim' ELSE 'Não' END) as incide_para_IR
+    CASE WHEN 
+        min(incidencia.tipoincidencia) = 78
+        THEN 'Sim' 
+        ELSE 'Não' 
+        END as incide_para_IR
 FROM contas
 JOIN incidencia
     ON incidencia.conta = contas.conta
-JOIN containcid
-    ON containcid.tipoincidencia = incidencia.tipoincidencia
+GROUP BY contas.conta,
+    contas.descricao
 ;
 
 -- 22. Listar o código e o nome de todos operadores que possuem a permissão 
 -- (perfil) Folha de Pagamento.
-
+SELECT operadores.operador,
+    operadores.nome
+FROM operadores
+JOIN operadoresperfis
+    ON operadoresperfis.operador = operadores.operador
+JOIN perfis
+    ON perfis.codigo = operadoresperfis.perfil
+WHERE perfis.codigo = 18
+;
 --23. Criar um sql com 7 colunas: Matricula, Nome, Tipo de folha, Referência da 
 -- folha, valor bruto recebido, total de descontos e total líquido, de valores de folha
-SELECT funcionarios.matricula,
-    funcionarios.nome,
-    tipofolha.descricao as tipo_de_folha,
-    calculos.referencia,
-    calculos.valor as valor_bruto,
-    calculos_desconto.valor as total_desconto,
-    calculos_total_liquido.valor as total_liquido
-FROM funcionarios
-JOIN calculos
-    ON calculos.empresa = funcionarios.empresa
-    AND calculos.matricula = funcionarios.matricula
-JOIN calculos calculos_desconto
-    ON calculos_desconto.empresa = calculos.empresa
-    AND calculos_desconto.matricula = calculos.matricula
-JOIN calculos calculos_total_liquido
-    ON calculos_total_liquido.empresa = calculos_desconto.empresa
-    AND calculos_total_liquido.matricula = calculos_desconto.matricula
-JOIN tipofolha
-    ON tipofolha.tipofolha = calculos.tipofolha
-WHERE funcionarios.matricula = 1
-AND calculos.referencia = '01/05/2026'
-AND calculos.conta = 9000
-AND calculos_desconto.conta = 9001
-AND calculos_total_liquido.conta = 9002
-GROUP BY tipofolha.descricao, calculos.referencia, funcionarios.matricula, funcionarios.nome, calculos.valor, 
-calculos_desconto.valor, calculos_total_liquido.valor
-;
+SELECT * FROM
+    (
+        SELECT
+            funcionarios.matricula,
+            funcionarios.nome,
+            tipofolha.descricao AS tipo_de_folha,
+            calculos.referencia,
+            calculos.conta,
+            calculos.valor
+        FROM funcionarios
+        JOIN calculos 
+            ON calculos.empresa = funcionarios.empresa
+            AND calculos.matricula = funcionarios.matricula
+        JOIN tipofolha 
+            ON tipofolha.tipofolha = calculos.tipofolha
+            AND calculos.conta BETWEEN 9000 AND 9002
+    ) PIVOT (
+        SUM(valor)
+        FOR conta
+        IN ( 9000 AS total_bruto, 
+            9001 AS total_descontos, 
+            9002 AS total_liquido )
+    )
+ORDER BY matricula, referencia;
 
 
-select * from periodos;
-select * from tipofolha;
-select * from calculos;
+select * from PERFISPERMISSAO;
+select * from permissoes;
+select * from operadores;
 select * from perfis;
-select * from rotinas;
+select * from vinculos;
+
 
 
 
