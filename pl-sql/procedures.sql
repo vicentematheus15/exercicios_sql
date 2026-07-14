@@ -129,14 +129,37 @@ inserir uma linha na tabela xcp_debug com o valor da variável; (é só fazer a 
 prc_xcp_debug (1,4,w_auxiliar);*/
 
 
+
 /*5 (UTILIZANDO 'CURSOR' )
 Declarar um cursor que busque matricula e nome da tabela de funcionarios;
 Através de um laço de interação, inserir linha a linha a matricula e o nome do
 funcionário na tabela prc_xcp_debug (<nomecursor.matricula>, 5, <nomecursor.nome>)*/
+create or replace procedure pcr_exercicios_vicente is    
+begin
+-- isso é uma declaração implícita de um cursor. ele é essa variável "func", que vai armazenar o resultado da busca que ta sendo feita no banco 
+    for func in ( 
+        select *
+        from funcionarios
+        where 0 = 0
+        and matricula between 1 and 10
+    )loop     --início do loop
+        -- então é utilizado um loop para ir gravando cada uma das linhas que a variável "func" armazenou temporariamente, ja que ela percorre todas as linhas do select.
+        prc_xcp_debug('teste_vicente_func', $$plsql_line, func.matricula || ' - ' || func.nome);
+    end loop;
+end;
+
+call pcr_exercicios_vicente();
+
+select *
+from xcp_debug
+where 0 = 0
+and des_usuario = 'teste_vicente_func';
 
 /*6 Faça um loop na tabela inteira de funcionários ( apenas com esse select: select
 matricula, nome, sexo from funcionarios) e escreva na xcp_debug o nome das pessoas
 do sexo feminino*/
+
+
 
 /*7 Faça um loop na tabela inteira de funcionarios (apenas assim: select matricula from
 funcionarios) e escreva na tabela xcp_debug o nome do conjuge, se houver. Caso não
