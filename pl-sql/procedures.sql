@@ -220,3 +220,48 @@ and des_usuario = 'teste_vicente_loop_nomes_femininos';
 /*7 Faça um loop na tabela inteira de funcionarios (apenas assim: select matricula from
 funcionarios) e escreva na tabela xcp_debug o nome do conjuge, se houver. Caso não
 tenha, escreva: NAO TEM*/
+
+/* nesse foi feito o select pedido no exercício e depois no loop foi feito a ligacao para conseguir pegar o nome dos conjuges
+
+também foi utilizado a funcao listagg(nome, ', '), pois estava retornando mais de um nome para a consulta que so deveria retornar 1, 
+entao o listagg coloca os nomes retornados no primeiro parametro em uma string, separados pela vpirgula passada no segundo parametro
+
+alem do tratamento de exceções no final do loop, também foi usado nvl para corrigir o espaço vazio que o listagg estava retornando, assim corrigindo os retornos null para 'nao tem'
+
+foi criada uma varivel para deixar explicado qual era o grau de parentesco referente ao conjuge, para facilitar o entendimento e manutenção futura, 
+pois assim evita o trabalho que tive de buscar em todos os relacioanamentos de tabelas, qual qera o grau que eu estava procurando
+
+a outra variavel foi para armazenar o nome do conjuge, quando tinha
+
+foi utilizaado cursor implicito (func) e into para buscar dados em um select de uma tabela, por meio de um loop e armazenar em uma variavel */
+
+create or replace procedure pcr_exercicios_vicente is
+      const_grau_parentesco_conjuge constant number := 1;
+      aux_nome_conjuge varchar2(256);
+begin
+        for func in (
+            select matricula 
+            from funcionarios
+        )loop
+            begin
+                select nvl(listagg(nome, ', '), 'Não tem')
+                into aux_nome_conjuge
+                from dependentes
+                where 0 = 0
+                and dependentes.matricula = func.matricula
+                and dependentes.grau = const_grau_parentesco_conjuge
+                and dependentes.dtafim is null;
+            exception when no_data_found then
+                aux_nome_conjuge := 'Não tem';
+            end;
+            
+            prc_xcp_debug('teste_vicente_loop_nome_conjuges', $$plsql_line, func.matricula || ' - Conjuge: ' || aux_nome_conjuge);
+        end loop;
+end;
+
+call pcr_exercicios_vicente();
+
+select *
+from xcp_debug
+where 0 = 0
+and des_usuario = 'teste_vicente_loop_nome_conjuges';
