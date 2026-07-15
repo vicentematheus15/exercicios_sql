@@ -133,8 +133,7 @@ create or replace procedure pcr_exercicios_vicente is
 
 /*sempre que fizer um select into,  preciso cuidar para padronizar possível erros (null por exemplo, padronizando para 0) é preciso envolver a procedure dentro de outro begin/end e passar 
     "exception when no_data_found then
-            aux_auxiliar := 0;"                                                                 */
-        
+            aux_auxiliar := 0;"                                                                 */    
 begin
     begin
         select count(*)
@@ -188,7 +187,35 @@ and des_usuario = 'teste_vicente_func';
 matricula, nome, sexo from funcionarios) e escreva na xcp_debug o nome das pessoas
 do sexo feminino*/
 
+-- o exercicio pede para usar apenas aquele select (usando um if func.seco = 'F' no loop), mas é melhor para performance já filtrar com where no select.
+/* ficaria assim:
+    for func in (
+            select matricula, nome, sexo 
+            from funcionarios
+        )loop
+            if func.sexo = 'F' then
+                prc_xcp_debug('teste_vicente_loop_nomes_femininos', $$plsql_line, func.nome);
+            end if;
+        end loop;*/
+        
+create or replace procedure pcr_exercicios_vicente is
+begin
+        for func in (
+            select matricula, nome, sexo 
+            from funcionarios
+            where 0 = 0 
+            and sexo = 'F'
+        )loop
+        prc_xcp_debug('teste_vicente_loop_nomes_femininos', $$plsql_line, func.nome);
+        end loop;
+end;
 
+call pcr_exercicios_vicente();
+
+select *
+from xcp_debug
+where 0 = 0
+and des_usuario = 'teste_vicente_loop_nomes_femininos';
 
 /*7 Faça um loop na tabela inteira de funcionarios (apenas assim: select matricula from
 funcionarios) e escreva na tabela xcp_debug o nome do conjuge, se houver. Caso não
